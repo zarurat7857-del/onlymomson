@@ -1,0 +1,27 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or "mysql" / "sqlite" depending on your setup
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  type      String
+  
+  // FIX FOR LINE 60: contentUrl MUST be marked as @unique
+  contentUrl String  @unique 
+  
+  caption   String?
+
+  // FIX FOR LINE 70: You must define the username field
+  username  String   @default("Admin") 
+  
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  createdAt DateTime @default(now())
+}
