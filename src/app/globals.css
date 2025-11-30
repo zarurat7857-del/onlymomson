@@ -4,55 +4,68 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    /* Base ShadCN Variables (Adapted for Dark Mode Default) */
+    --background: 0 0% 2%; /* Matches #050505 */
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    
+    --card: 0 0% 3.5%; /* Slightly lighter than bg for cards */
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    
+    --popover: 0 0% 3.5%;
     --popover-foreground: 0 0% 98%;
-    --primary: 300 76% 72%; /* Logo Pink HSL approx */
+    
+    --primary: 300 76% 72%; /* Neon Pink */
     --primary-foreground: 0 0% 100%;
+    
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
+    
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    
+    --accent: 265 83% 45%; /* Purple Accent */
     --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+    
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 300 76% 72%;
+    
     --radius: 0.5rem;
-  }
- 
-  .dark {
-    --background: 0 0% 0%; /* Pure Black */
-    --foreground: 0 0% 98%;
   }
 }
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
   body {
-    background-color: #050505; /* Your Matte Black Request */
-    color: #ffffff;
+    @apply bg-[#050505] text-foreground; /* Forces your Matte Black */
   }
 }
 
 @layer utilities {
-  /* Updated Sidebar Glass to match Logo Purple tint */
+  /* Glass Effects */
   .glass-sidebar {
-    @apply bg-[#080808]/90 backdrop-blur-xl border-r border-brand-purple/20 shadow-[0_0_15px_-5px_rgba(139,92,246,0.3)];
+    @apply bg-[#080808]/90 backdrop-blur-xl border-r border-white/5 shadow-[0_0_15px_-5px_rgba(139,92,246,0.1)];
   }
   
   .glass-modal {
-    @apply bg-[#0f0f0f]/95 backdrop-blur-2xl border border-brand-pink/20 shadow-2xl;
+    @apply bg-[#0f0f0f]/95 backdrop-blur-2xl border border-white/10 shadow-2xl;
   }
   
-  /* Hide scrollbar */
+  /* Text Gradients (like your Logo) */
+  .text-gradient-pink {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-pink to-brand-purple;
+  }
+
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600;
+  }
+  
+  /* Scrollbar Hiding */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

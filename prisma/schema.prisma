@@ -1,27 +1,49 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql" // or "mysql" / "sqlite" depending on your setup
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// --- YOUR EXISTING MODEL (For Main Feed) ---
 model Post {
-  id        String   @id @default(cuid())
-  type      String
-  
-  // FIX FOR LINE 60: contentUrl MUST be marked as @unique
-  contentUrl String  @unique 
-  
-  caption   String?
+  id         String   @id @default(cuid())
+  type       String
+  contentUrl String   @unique 
+  caption    String?
+  username   String   @default("Admin") 
+  likes      Int      @default(0)
+  comments   Int      @default(0)
+  createdAt  DateTime @default(now())
+}
 
-  // FIX FOR LINE 70: You must define the username field
-  username  String   @default("Admin") 
-  
-  likes     Int      @default(0)
-  comments  Int      @default(0)
+// --- NEW MODELS (For MomRadar Crawler) ---
+
+model MediaItem {
+  id        String   @id @default(cuid())
+  title     String
+  type      String   // "IMG", "GIF", "VIDEO"
+  url       String   // The image URL found by the crawler
+  source    String   // e.g., "Desi Mom Pics"
+  views     String?  // Mock view count like "12k"
   createdAt DateTime @default(now())
+}
+
+model CrawlerAgent {
+  id         String   @id
+  name       String
+  status     String   @default("Idle")
+  itemsCount Int      @default(0)
+  lastActive DateTime @default(now())
+}
+
+model SocialProfile {
+  id          String   @id @default(cuid())
+  handle      String   // e.g. "@bad_mom_memes"
+  platform    String   // "Instagram" or "Twitter"
+  url         String   @unique
+  originQuery String   // "searched for milf memes"
+  discoveredAt DateTime @default(now())
 }

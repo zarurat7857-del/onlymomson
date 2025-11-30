@@ -33,7 +33,7 @@ export default function Sidebar({ onCollapse }: { onCollapse?: (collapsed: boole
     { icon: Video, label: "Videos", href: "/videos" },
     { icon: BookOpen, label: "Stories", href: "/stories" },
     { icon: MessageCircle, label: "Chat", href: "/chat" },
-    { icon: Bot, label: "AI Tools", href: "/ai" },
+    { icon: Bot, label: "Mom Radar", href: "/momRadar" },
     { icon: Mail, label: "Contact", href: "/contact" },
     { icon: Info, label: "About", href: "/about" },
   ];

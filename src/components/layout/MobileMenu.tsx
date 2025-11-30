@@ -13,7 +13,7 @@ export default function MobileMenu() {
     { label: "Videos", href: "/videos" },
     { label: "Stories", href: "/stories" },
     { label: "Chat", href: "/chat" },
-    { label: "AI Tools", href: "/ai" },
+    { label: "Mom radar", href: "/momRadar" },
     { label: "Contact", href: "/contact" },
     { label: "About", href: "/about" },
   ];
