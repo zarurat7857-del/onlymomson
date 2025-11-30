@@ -7,12 +7,12 @@ import FeedItem from "@/components/feed/FeedItem";
 import AdSlot from "@/components/common/AdSlot";
 import MobileMenu from "@/components/layout/MobileMenu";
 import SeductiveLoader from "@/components/common/SeductiveLoader";
-import { RefreshCw, ArrowDownCircle } from "lucide-react";
+import { RefreshCw, ArrowDownCircle, Sparkles, AlertCircle } from "lucide-react";
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true); // Initial full-page load
-  const [loadingMore, setLoadingMore] = useState(false); // Button loading state
+  const [loading, setLoading] = useState(true); 
+  const [loadingMore, setLoadingMore] = useState(false);
   const [selectedPost, setSelectedPost] = useState<any>(null);
   
   // Pagination State
@@ -20,26 +20,41 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const ITEMS_PER_PAGE = 20;
 
-  // Unified Fetch Function
+  // --- CORE LOGIC: Fetch & Append ---
   async function fetchFeed(pageNum: number) {
     try {
-      // Append query params for pagination
+      // 1. Fetch the data (The API handles the random selection)
       const res = await fetch(`/api/posts?page=${pageNum}&limit=${ITEMS_PER_PAGE}`);
       
       if (!res.ok) throw new Error("API Failed");
       
-      const newPosts = await res.json();
+      let newPosts = await res.json();
       
-      // If we got fewer items than requested, we've reached the end
+      // 2. Client-Side Shuffle (Only shuffles the NEW batch, not the old ones)
+      // This ensures the new block of 20 videos looks random
+      newPosts = newPosts.sort(() => Math.random() - 0.5);
+      
+      // If the DB returned fewer items than requested, we are near the end
       if (newPosts.length < ITEMS_PER_PAGE) {
-        setHasMore(false);
+        setHasMore(false); 
       }
 
-      // If page 1, replace data. If page > 1, append data.
       if (pageNum === 1) {
+        // First load: Set the data directly
         setPosts(newPosts);
       } else {
-        setPosts((prev) => [...prev, ...newPosts]);
+        // --- CRITICAL STEP: Strict Append & Dedupe ---
+        setPosts((prev) => {
+            // A. Create a Set of existing IDs to check against (Fast lookup)
+            const existingIds = new Set(prev.map(p => p.id));
+            
+            // B. Filter out any video that is ALREADY on screen
+            const uniqueNewPosts = newPosts.filter((p: any) => !existingIds.has(p.id));
+            
+            // C. Return OLD items + NEW unique items
+            // This guarantees the top of the page NEVER changes or reloads
+            return [...prev, ...uniqueNewPosts];
+        });
       }
     } catch (error) {
       console.error("Failed to load feed", error);
@@ -49,24 +64,23 @@ export default function Home() {
     }
   }
 
-  // Initial Load (Page 1)
+  // Initial Load
   useEffect(() => {
     fetchFeed(1);
   }, []);
 
-  // Handle "Show More" Click
+  // Handle "Show More"
   const handleShowMore = () => {
     setLoadingMore(true);
     const nextPage = page + 1;
-    setPage(nextPage); // Update state
-    fetchFeed(nextPage); // Fetch next chunk
+    setPage(nextPage);
+    fetchFeed(nextPage);
   };
 
-  // Show full loader only on initial mount
   if (loading) return <SeductiveLoader />;
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen bg-[#050505] pb-24 font-sans text-white">
       
       {/* Spotlight Section */}
       <section className="w-full max-w-7xl mx-auto md:mt-6">
@@ -77,23 +91,40 @@ export default function Home() {
       <MobileMenu />
 
       {/* Main Mixed Feed */}
-      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 mt-4 md:mt-0">
-        <h3 className="text-xl font-bold mb-4 text-white/80 hidden md:block">Premium Feed</h3>
+      <section className="w-full max-w-7xl mx-auto px-4 md:px-8 mt-4 md:mt-8">
         
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-6">
+            <Sparkles size={18} className="text-brand-pink animate-pulse" />
+            <h3 className="text-xl font-bold text-white tracking-tight">For You</h3>
+        </div>
+        
+        {/* Masonry Grid */}
         <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
           {posts.length > 0 ? (
-            posts.map((post) => (
-              <FeedItem 
-                  key={post.id} 
-                  post={post} 
-                  onClick={setSelectedPost} 
-              />
+            posts.map((post, index) => (
+              <div 
+                  // KEY IS CRITICAL: Using post.id ensures React doesn't re-render old items
+                  key={post.id}
+                  className="break-inside-avoid relative group animate-in fade-in zoom-in-95 duration-700 fill-mode-forwards"
+                  // Stagger animation only applies to items as they appear
+                  style={{ animationDelay: `${(index % ITEMS_PER_PAGE) * 50}ms` }}
+              >
+                 <div className="relative rounded-xl overflow-hidden border border-white/5 group-hover:border-brand-pink/50 transition-all duration-300">
+                      <FeedItem 
+                          post={post} 
+                          onClick={setSelectedPost} 
+                          className="!mb-0" 
+                      />
+                  </div>
+              </div>
             ))
           ) : (
             // Empty State
-            <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
-                <p className="font-bold text-white mb-2">No posts found.</p>
-                <p className="text-xs">Database might be empty. Sync via Images/Videos page.</p>
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500 border border-dashed border-white/10 rounded-xl bg-[#0a0a0a]">
+                <AlertCircle size={32} className="text-brand-pink mb-2" />
+                <p className="font-bold text-white mb-2">Feed Offline.</p>
+                <p className="text-xs">Database might be empty.</p>
             </div>
           )}
         </div>
@@ -104,17 +135,23 @@ export default function Home() {
                 <button 
                     onClick={handleShowMore}
                     disabled={loadingMore}
-                    className="flex items-center gap-2 px-8 py-3 bg-white/5 hover:bg-brand-pink/20 border border-white/10 rounded-full text-sm font-bold uppercase tracking-wider transition-all group disabled:opacity-50"
+                    className="
+                        flex items-center gap-2 px-8 py-3 
+                        bg-[#0a0a0a] border border-white/20 rounded-full 
+                        text-xs font-bold uppercase tracking-widest 
+                        hover:border-brand-pink hover:bg-brand-pink/5 
+                        transition-all group disabled:opacity-50
+                    "
                 >
                     {loadingMore ? (
                         <>
-                            <RefreshCw size={16} className="animate-spin text-brand-pink" />
-                            <span>Loading...</span>
+                            <RefreshCw size={14} className="animate-spin text-brand-pink" />
+                            <span>Mixing Content...</span>
                         </>
                     ) : (
                         <>
-                            <ArrowDownCircle size={16} className="text-brand-pink group-hover:translate-y-1 transition-transform" />
-                            <span>Show More</span>
+                            <ArrowDownCircle size={14} className="text-gray-400 group-hover:text-white transition-colors" />
+                            <span>Load More</span>
                         </>
                     )}
                 </button>
@@ -123,10 +160,8 @@ export default function Home() {
         
         {/* End of Feed Message */}
         {!hasMore && posts.length > 0 && (
-             <div className="text-center mt-12 mb-8">
-                <div className="inline-block px-4 py-1 bg-white/5 rounded-full border border-white/5">
-                    <p className="text-gray-500 text-[10px] uppercase tracking-widest">You have reached the end</p>
-                </div>
+             <div className="text-center mt-12 mb-8 opacity-50">
+                <p className="text-[10px] uppercase tracking-widest">End of Stream</p>
              </div>
         )}
 
